@@ -4,82 +4,288 @@
 </head>
 <body>
 <center>
-<h2>Monoalphabetic Ciphering / Deciphering</h2>
-<br>
-  <textarea rows="4" cols="50"  id="textbox"></textarea>
-<br>
-<button id="btn">Cipher</button>
-<button id="debtn">Decipher</button>
-<br>
-<hr>
-<h2>Key</h2>
-
-<textarea rows="1" cols="50" id="Key"></textarea>
-
-<br>
-<h2>Result</h2>
-
-<textarea rows="4"  cols="50" id="result"></textarea>
-
-</center>
+<h2>playfair</h2>
 
 <script>
-var shuffledArr;
-let alphabetArr = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
+ // Function to generate the 5x5 key square
 
-function shuffle(array) {
-	let shuffledArray = array.slice(0,array.length)
-	var currentIndex = shuffledArray.length;
-	var temporaryValue, randomIndex;
+        function generateKeyTable(key, ks, keyT) {
 
-	while (0 !== currentIndex) {
-		randomIndex = Math.floor(Math.random() * currentIndex);
-		currentIndex -= 1;
+            let i, j, k, flag = 0;
+ 
 
-		temporaryValue = shuffledArray[currentIndex];
-		shuffledArray[currentIndex] = shuffledArray[randomIndex];
-		shuffledArray[randomIndex] = temporaryValue;
-	}
+            // a 26 character hashmap
 
-	return shuffledArray;
-}
+            // to store count of the alphabet
 
-function cipher(){
-shuffledArr = shuffle(alphabetArr);
-document.getElementById("Key").innerHTML = shuffledArr.join().replace(/,/g, '')
+            let dicty = new Array(26).fill(0);
 
-var textArr = document.getElementById("textbox").value.split("");
-for(let k=0; k<textArr.length; k++){
-if ((textArr[k] == ' ') || (textArr[k] == '\t') || (textArr[k] == '\n' || alphabetArr.indexOf(textArr[k].toUpperCase())==-1)){
-continue;
+            for (i = 0; i < ks; i++) {
 
-}else
-textArr[k]=shuffledArr[alphabetArr.indexOf(textArr[k].toUpperCase())];
-	}
-document.getElementById("result").innerHTML = textArr.join().replace(/,/g, '')
-}
+                let r = key[i].charCodeAt(0) - 97;
+ 
+
+                if (key[i] != 'j') {
+
+                    dicty[r] = 2;
+
+                }
+ 
+
+            }
+ 
+
+            dicty['j'.charCodeAt(0) - 97] = 1;
+
+            i = 0;
+
+            j = 0;
+ 
+
+            for (k = 0; k < ks; k++) {
+
+                let r = key[k].charCodeAt(0) - 97;
+
+                if (dicty[r] == 2) {
+
+                    dicty[r] -= 1;
+
+                    keyT[i][j] = key[k];
+
+                    j++;
+
+                    if (j == 5) {
+
+                        i++;
+
+                        j = 0;
+
+                    }
+
+                }
+
+            }
+ 
+
+            for (k = 0; k < 26; k++) {
+
+                if (dicty[k] == 0) {
+
+                    keyT[i][j] = String.fromCharCode(k + 97);
+
+                    j++;
+
+                    if (j == 5) {
+
+                        i++;
+
+                        j = 0;
+
+                    }
+
+                }
+
+            }
+
+            return keyT;
+
+        }
+ 
+
+        // Function to search for the characters of a digraph
+
+        // in the key square and return their position
+
+        function search(keyT, a, b, arr) {
+
+            let i, j;
+ 
+
+            if (a == 'j')
+
+                a = 'i';
+
+            else if (b == 'j')
+
+                b = 'i';
+ 
+
+            for (i = 0; i < 5; i++) {
+ 
+
+                for (j = 0; j < 5; j++) {
+ 
+
+                    if (keyT[i][j] == a) {
+
+                        arr[0] = i;
+
+                        arr[1] = j;
+
+                    }
+
+                    else if (keyT[i][j] == b) {
+
+                        arr[2] = i;
+
+                        arr[3] = j;
+
+                    }
+
+                }
+
+            }
+
+            return arr;
+
+        }
+ 
+
+        // Function to find the modulus with 5
+
+        function mod5(a) {
+
+            return (a % 5);
+
+        }
+ 
+
+        // Function to make the plain text length to be even
+
+        function prepare(str, ptrs) {
+
+            if (ptrs % 2 != 0) {
+
+                str += 'z';
+
+            }
+ 
+
+            return [str, ptrs];
+
+        }
+ 
+
+        // Function for performing the encryption
+
+        function encrypt(str, keyT, ps) {
+
+            let i;
+
+            let a = new Array(4).fill(0);
+
+            let newstr = new Array(ps);
+ 
+
+            for (i = 0; i < ps; i += 2) {
+
+                let brr = search(keyT, str[i], str[i + 1], a);
+
+                let k1 = brr[0];
+
+                let k2 = brr[1];
+
+                let k3 = brr[2];
+
+                let k4 = brr[3];
+
+                if (k1 == k3) {
+
+                    newstr[i] = keyT[k1][(k2 + 1) % 5];
+
+                    newstr[i + 1] = keyT[k1][(k4 + 1) % 5];
+
+                }
+
+                else if (k2 == k4) {
+
+                    newstr[i] = keyT[(k1 + 1) % 5][k2];
+
+                    newstr[i + 1] = keyT[(k3 + 1) % 5][k2];
+
+                }
+
+                else {
+
+                    newstr[i] = keyT[k1][k4];
+
+                    newstr[i + 1] = keyT[k3][k2];
+
+                }
+
+            }
+
+            let res = "";
+ 
+
+            for (let i = 0; i < newstr.length; i++) { res += newstr[i]; }
+
+            return res;
+
+        }
+ 
+
+        // Function to encrypt using Playfair Cipher
+
+        function encryptByPlayfairCipher(str, key) {
+
+            let ps, ks;
+
+            let keyT = new Array(5);
+ 
+
+            for (let i = 0; i < 5; i++) {
+
+                keyT[i] = new Array(5);
+
+            }
+
+            str = str.trim();
+
+            key = key.trim();
+
+            str = str.toLowerCase();
+ 
+
+            key = key.toLowerCase();
+
+            ps = str.length;
+
+            ks = key.length;
+
+            [str, ps] = prepare(str, ps);
+ 
+
+            let kt = generateKeyTable(key, ks, keyT);
+
+            return encrypt(str, kt, ps);
+
+        }
+ 
+
+        // Driver code
+
+        let key = " Monarchy";
+
+        let str = " instruments";
+ 
+
+        // Key to be encrypted
+ 
+
+        console.log("Key text: " + key + "<br>");
+ 
+
+        console.log("Plain text: " + str + "<br>");
+
+        // encrypt using Playfair Cipher
+ 
+
+        console.log("Cipher text: " + encryptByPlayfairCipher(str, key));
+
+         
+
 	
-	
-function decipher(){
-var textArr = document.getElementById("result").value.split("");
-for(let k=0; k<textArr.length;k++){
-if ((textArr[k] == ' ') || (textArr[k] == '\t') || (textArr[k] == '\n' || alphabetArr.indexOf(textArr[k].toUpperCase())==-1)){
-continue;
-
-}else
-textArr[k]=alphabetArr[shuffledArr.indexOf(textArr[k].toUpperCase())];
-}document.getElementById("result").innerHTML = textArr.join().replace(/,/g, '')
-}
-	
-
-	document.getElementById("btn").onclick=function(){
-	cipher();
-	}
-	
-	document.getElementById("debtn").onclick=function(){
-	decipher();
-	}
-
 </script>
 </body>
 </html>
